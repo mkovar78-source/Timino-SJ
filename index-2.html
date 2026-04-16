@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Slovný Trenažér</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-title" content="Slovina">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; height: 100dvh; display: flex; justify-content: center; overflow: hidden; }
+        .app-container { width: 100%; max-width: 450px; height: 100%; display: flex; flex-direction: column; padding: 4vh 5vw; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.95rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .level-badge { background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); color: #38bdf8; }
+        .progress-bar-bg { width: 100%; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 10px rgba(56,189,248,0.5); }
+        .target-msg { text-align: center; font-size: 0.9rem; color: #f472b6; font-weight: bold; margin-bottom: 2vh; letter-spacing: 0.5px; }
+        .sentence-box { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 16px; padding: 20px 25px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.2); margin-bottom: 2vh; }
+        .sentence-content { font-size: 1.5rem; text-align: center; line-height: 1.6; }
+        .highlight { color: #fde047; font-weight: 800; text-shadow: 0 0 12px rgba(253,224,71,0.4); }
+        .explanation { min-height: 55px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-weight: 500; padding: 0 8px; margin-bottom: 1.5vh; }
+        .instruction { text-align: center; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .controls { display: flex; flex-direction: column; gap: 10px; padding-bottom: 2vh; }
+        button.option-btn { background: transparent; color: #f8fafc; border: 2px solid #334155; padding: 15px; border-radius: 12px; font-size: 1.05rem; font-weight: bold; letter-spacing: 1px; cursor: pointer; transition: all 0.15s; }
+        .btn-pre { border-color: #f43f5e !important; color: #f43f5e !important; }
+        .btn-pri { border-color: #10b981 !important; color: #10b981 !important; }
+        .btn-spo { border-color: #f59e0b !important; color: #f59e0b !important; }
+        button.option-btn:active { transform: scale(0.97); }
+        button.option-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s ease; }
+        #win-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; flex-direction: column; align-items: center; justify-content: center; z-index: 100; padding: 30px; text-align: center; }
+        .win-emoji { font-size: 5rem; margin-bottom: 15px; }
+        .win-title { color: #fde047; font-size: 2rem; font-weight: 900; margin-bottom: 10px; }
+        .win-sub { color: #94a3b8; font-size: 1.05rem; margin-bottom: 25px; line-height: 1.5; }
+        .reward-box { background: rgba(16,185,129,0.1); border: 2px solid rgba(16,185,129,0.4); border-radius: 16px; padding: 20px 30px; margin-bottom: 20px; }
+        .reward-label { color: #10b981; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .reward-text { color: #f8fafc; font-size: 1.3rem; font-weight: 700; line-height: 1.5; }
+        .reset-btn { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 12px 28px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <div id="win-screen">
+        <div class="win-emoji">🏆</div>
+        <div class="win-title">MISIA SPLNENÁ!</div>
+        <div class="win-sub">Zvládol si všetkých 30 otázok.<br>Zaslúžiš si odmenu!</div>
+        <div class="reward-box">
+            <div class="reward-label">🍕 Tvoja odmena</div>
+            <div class="reward-text">Vyberáš si donášku<br>obľúbeného jedla!</div>
+        </div>
+        <p style="color:#64748b; font-size:0.85rem; margin-bottom:15px;">Ukáž obrazovku ockovi a vyber si! 😄</p>
+        <button class="reset-btn" onclick="resetGame()">Hrať znova</button>
+    </div>
+
+    <div class="header">
+        <div class="level-badge">Otázka <span id="qnum">1</span> / 30</div>
+        <div>✓ <span id="correct" style="color:#10b981;">0</span> &nbsp; ✗ <span id="wrong" style="color:#f43f5e;">0</span></div>
+    </div>
+
+    <div class="progress-bar-bg"><div id="pb" class="progress-fill"></div></div>
+    <div class="target-msg" id="target">Správne: 0 / 30 🎯</div>
+
+    <div class="sentence-box" id="sentence-box">
+        <div class="sentence-content" id="sentence-text">Pripravujem otázku...</div>
+    </div>
+
+    <div class="explanation" id="exp"></div>
+    <div class="instruction">Zvoľ správny slovný druh:</div>
+
+    <div class="controls">
+        <button id="btn-pre" class="option-btn btn-pre" onclick="check('predložka')">PREDLOŽKA</button>
+        <button id="btn-pri" class="option-btn btn-pri" onclick="check('príslovka')">PRÍSLOVKA</button>
+        <button id="btn-spo" class="option-btn btn-spo" onclick="check('spojka')">SPOJKA</button>
+    </div>
+</div>
+
+<script>
+var explanations = {
+    "predložka": "PREDLOŽKA — vyjadruje vzťah k okoliu (miesto, čas, smer). Stojí pred podstatným menom.",
+    "príslovka": "PRÍSLOVKA — vyjadruje okolnosť deja. Pýtame sa: Kde? Kedy? Ako? Prečo?",
+    "spojka": "SPOJKA — spája slová alebo vety (a, ale, lebo, hoci, aby, keď...)."
+};
+
+var data = [
+    // PREDLOŽKY
+    {veta: "Superman lieta nad mestom.", slovo: "nad", odpoved: "predložka"},
+    {veta: "Iron Man letel cez mrak.", slovo: "cez", odpoved: "predložka"},
+    {veta: "Gollum sedel pri jazere.", slovo: "pri", odpoved: "predložka"},
+    {veta: "Minioni bežali okolo auta.", slovo: "okolo", odpoved: "predložka"},
+    {veta: "Dobby bol otrok bez slobody.", slovo: "bez", odpoved: "predložka"},
+    {veta: "Dumbledore stál oproti Voldemortovi.", slovo: "oproti", odpoved: "predložka"},
+    {veta: "Pán Prsteňov sa odohráva počas vojny.", slovo: "počas", odpoved: "predložka"},
+    {veta: "Shrek žije ďaleko od mesta.", slovo: "od", odpoved: "predložka"},
+    {veta: "Sonic zabehol až ku kopcu.", slovo: "ku", odpoved: "predložka"},
+    {veta: "Moana vyplávala napriek búrke.", slovo: "napriek", odpoved: "predložka"},
+    {veta: "Spider-Man vyliezol po múre.", slovo: "po", odpoved: "predložka"},
+    {veta: "Batman skočil z budovy.", slovo: "z", odpoved: "predložka"},
+    {veta: "Darth Vader kráčal pred armádou.", slovo: "pred", odpoved: "predložka"},
+    {veta: "Frodo šiel do Mordoru.", slovo: "do", odpoved: "predložka"},
+    {veta: "Nemo bol uväznený v akváriu.", slovo: "v", odpoved: "predložka"},
+    {veta: "Woody leží pod posteľou.", slovo: "pod", odpoved: "predložka"},
+    {veta: "Elsa tancuje na ľade.", slovo: "na", odpoved: "predložka"},
+    {veta: "Thor hodil kladivo za seba.", slovo: "za", odpoved: "predložka"},
+    {veta: "Mulan bojovala namiesto otca.", slovo: "namiesto", odpoved: "predložka"},
+    {veta: "Jack Sparrow utiekol napriek putám.", slovo: "napriek", odpoved: "predložka"},
+    {veta: "Voldemort číhal za rohom.", slovo: "za", odpoved: "predložka"},
+    {veta: "Buzz vyletel sponad pohovky.", slovo: "sponad", odpoved: "predložka"},
+    // PRÍSLOVKY
+    {veta: "Yoda hovorí pomaly.", slovo: "pomaly", odpoved: "príslovka"},
+    {veta: "Sonic beží neuveriteľne rýchlo.", slovo: "neuveriteľne", odpoved: "príslovka"},
+    {veta: "Darth Vader dýcha nahlas.", slovo: "nahlas", odpoved: "príslovka"},
+    {veta: "Shrek sa smeje hlasno.", slovo: "hlasno", odpoved: "príslovka"},
+    {veta: "Elsa spieva krásne.", slovo: "krásne", odpoved: "príslovka"},
+    {veta: "Olaf tancuje veselo.", slovo: "veselo", odpoved: "príslovka"},
+    {veta: "Batman odpovedá ticho.", slovo: "ticho", odpoved: "príslovka"},
+    {veta: "Hulk dupká zúrivo.", slovo: "zúrivo", odpoved: "príslovka"},
+    {veta: "Gru sa tvári nahnevane.", slovo: "nahnevane", odpoved: "príslovka"},
+    {veta: "Harry Potter vyhral tesne.", slovo: "tesne", odpoved: "príslovka"},
+    {veta: "Minioni pracujú spoločne.", slovo: "spoločne", odpoved: "príslovka"},
+    {veta: "Spider-Man pristál mäkko.", slovo: "mäkko", odpoved: "príslovka"},
+    {veta: "Moana plávala odvážne.", slovo: "odvážne", odpoved: "príslovka"},
+    {veta: "Simba zareval mocne.", slovo: "mocne", odpoved: "príslovka"},
+    {veta: "Jack Sparrow kráča krivolako.", slovo: "krivolako", odpoved: "príslovka"},
+    {veta: "Mulan bojovala statočne.", slovo: "statočne", odpoved: "príslovka"},
+    {veta: "Dobby slúžil poslušne.", slovo: "poslušne", odpoved: "príslovka"},
+    {veta: "Thor pristál s hukotom dole.", slovo: "dole", odpoved: "príslovka"},
+    {veta: "Gollum šepká záhadne.", slovo: "záhadne", odpoved: "príslovka"},
+    {veta: "Iron Man pristál elegantne.", slovo: "elegantne", odpoved: "príslovka"},
+    {veta: "Hermiona odpovedala okamžite.", slovo: "okamžite", odpoved: "príslovka"},
+    // SPOJKY
+    {veta: "Shrek je škaredý, ale má dobré srdce.", slovo: "ale", odpoved: "spojka"},
+    {veta: "Frodo šiel ďalej, hoci bol unavený.", slovo: "hoci", odpoved: "spojka"},
+    {veta: "Hermiona sa učí, lebo chce vyhrať.", slovo: "lebo", odpoved: "spojka"},
+    {veta: "Batman a Spider-Man sú hrdinovia.", slovo: "a", odpoved: "spojka"},
+    {veta: "Simba utiekol, keď zomrel otec.", slovo: "keď", odpoved: "spojka"},
+    {veta: "Trénujem, aby som bol ako Thor.", slovo: "aby", odpoved: "spojka"},
+    {veta: "Prišiel neskoro, no ospravedlnil sa.", slovo: "no", odpoved: "spojka"},
+    {veta: "Woody aj Buzz sú kamaráti.", slovo: "aj", odpoved: "spojka"},
+    {veta: "Nemo plaval rýchlo, až ho nikto nestihol.", slovo: "až", odpoved: "spojka"},
+    {veta: "Gollum miloval prsteň, hoci mu škodil.", slovo: "hoci", odpoved: "spojka"},
+    {veta: "Hermiona ani Ron neverili tomu.", slovo: "ani", odpoved: "spojka"},
+    {veta: "Minion jedol banán, potom zaspal.", slovo: "potom", odpoved: "spojka"},
+    {veta: "Shrek i Fiona boli šťastní.", slovo: "i", odpoved: "spojka"},
+    {veta: "Iron Man zachránil svet, hoci riskoval život.", slovo: "hoci", odpoved: "spojka"},
+    {veta: "Elsa spievala, keď bola sama.", slovo: "keď", odpoved: "spojka"},
+    {veta: "Budeš hrdinský, alebo sa vzdáš?", slovo: "alebo", odpoved: "spojka"},
+    {veta: "Voldemort prehral, lebo podcenil lásku.", slovo: "lebo", odpoved: "spojka"},
+    {veta: "Jack Sparrow utiekol, čo len mohol.", slovo: "čo", odpoved: "spojka"},
+    {veta: "Mulan zvíťazila, pretože bola múdra.", slovo: "pretože", odpoved: "spojka"},
+    {veta: "Sonic beží tak rýchlo, že zmizne.", slovo: "že", odpoved: "spojka"},
+    {veta: "Darth Vader je mocný, no smutný.", slovo: "no", odpoved: "spojka"},
+    {veta: "Thanos zmizol, akonáhle luskol prstami.", slovo: "akonáhle", odpoved: "spojka"},
+    {veta: "Budem trénovať, kým nebudem najlepší.", slovo: "kým", odpoved: "spojka"}
+];
+
+var GOAL = 30;
+var current = 0;
+var wrongCount = 0;
+var isWaiting = false;
+var currentQ = null;
+var queue = [];
+
+function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+}
+
+function setButtons(disabled) {
+    document.getElementById('btn-pre').disabled = disabled;
+    document.getElementById('btn-pri').disabled = disabled;
+    document.getElementById('btn-spo').disabled = disabled;
+}
+
+function buildSentence(item) {
+    var veta = item.veta;
+    var slovo = item.slovo;
+    var idx = veta.indexOf(slovo);
+    if (idx === -1) return veta;
+    return veta.substring(0, idx) +
+           '<span class="highlight">' + slovo + '</span>' +
+           veta.substring(idx + slovo.length);
+}
+
+function updateHeader() {
+    document.getElementById('qnum').innerText = current + 1;
+    document.getElementById('correct').innerText = current;
+    document.getElementById('wrong').innerText = wrongCount;
+    document.getElementById('pb').style.width = (current / GOAL * 100) + '%';
+    document.getElementById('target').innerText = 'Správne: ' + current + ' / ' + GOAL + ' 🎯';
+}
+
+function showQuestion() {
+    if (current >= GOAL) {
+        document.getElementById('win-screen').style.display = 'flex';
+        return;
+    }
+    isWaiting = false;
+    // Vyber novú otázku — nikdy nie tú istú ako predchádzajúca
+    var next;
+    do {
+        if (queue.length === 0) queue = shuffle(data);
+        next = queue.pop();
+    } while (currentQ && next.slovo === currentQ.slovo && data.length > 1);
+    currentQ = next;
+
+    document.getElementById('sentence-text').innerHTML = buildSentence(currentQ);
+    document.getElementById('exp').innerText = '';
+    updateHeader();
+    setButtons(false);
+}
+
+function check(ans) {
+    if (!currentQ || isWaiting) return;
+    isWaiting = true;
+    setButtons(true);
+    var expEl = document.getElementById('exp');
+
+    if (ans === currentQ.odpoved) {
+        current++;
+        expEl.style.color = '#10b981';
+        expEl.innerText = '✓ SPRÁVNE! ' + explanations[ans];
+        updateHeader();
+        setTimeout(showQuestion, 2200);
+    } else {
+        wrongCount++;
+        expEl.style.color = '#f43f5e';
+        expEl.innerText = '✗ CHYBA — ' + explanations[currentQ.odpoved];
+        updateHeader();
+        // Shake animácia
+        var box = document.getElementById('sentence-box');
+        box.classList.add('shake');
+        setTimeout(function() { box.classList.remove('shake'); }, 400);
+        // Zostaneš na tej istej otázke — dáme ju späť do fronty
+        var stuckQ = currentQ;
+        setTimeout(function() {
+            expEl.innerText = '';
+            queue.push(stuckQ); // vrátime ju naspäť
+            currentQ = null;    // reset aby showQuestion mohol vybrať
+            currentQ = stuckQ; // ale zachovaj pre anti-duplicate check
+            document.getElementById('sentence-text').innerHTML = buildSentence(stuckQ);
+            document.getElementById('exp').innerText = '';
+            isWaiting = false;
+            setButtons(false);
+        }, 2800);
+    }
+}
+
+function resetGame() {
+    current = 0;
+    wrongCount = 0;
+    queue = [];
+    currentQ = null;
+    document.getElementById('win-screen').style.display = 'none';
+    showQuestion();
+}
+
+window.onload = function() { showQuestion(); };
+</script>
+</body>
+</html>
